@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GET FOOD</title>
+    <link rel="icon" type="image" href="./assets/fast-food.png" />
+    <link rel="stylesheet" href="adminDashBoard.css" />
+  </head>
+  <body>
+    <nav class="navbar">
+      <img
+        src="./assets/get-food-high-resolution-logo-transparent.png"
+        alt=""
+        class="icon-img"
+      />
+      <a href="./index.html"><button class="admin-btn">LOGOUT</button></a>
+    </nav>
+
+    <div class="HomePage">
+      <div class="addMenu">
+        <button class="admin-btn" id="add-menu">Add Menu</button>
+      </div>
+    </div>
+
+    <div class="menu">
+      <div id="menuContainer"></div>
+    </div>
+
+    <div class="form-container" id="MenuForm">
+      <form id="menuForm">
+        <h2 id="addMenu">Add Menu Item</h2>
+        <input
+          type="text"
+          id="itemName"
+          class="input"
+          placeholder="Item Name"
+        />
+        <input type="text" id="price" class="input" placeholder="Price" />
+        <input type="text" id="quantity" class="input" placeholder="Quantity" />
+        <input type="text" id="address" class="input" placeholder="Address" /> <!-- New address field -->
+        <div class="options">
+          <div class="option1">
+            <label for="veg">Veg</label>
+            <input type="radio" id="veg" name="foodType" value="veg" checked />
+          </div>
+          <div class="option2">
+            <label for="nonveg">Non-Veg</label>
+            <input type="radio" id="nonveg" name="foodType" value="nonveg" />
+          </div>
+        </div>
+        <div class="img" style="display: flex; padding: 10px 20px">
+          <input type="file" name="image" id="" style="font-size: 16px" />
+        </div>
+        <button type="submit" id="submit">Add Item</button>
+        <button type="button" id="closeForm">Close</button>
+      </form>
+    </div>
+
+    <script type="module">
+      window.onload = () => {
+        const form = document.getElementById("MenuForm");
+        form.style.display = "none";
+      };
+
+      const menuButton = document.getElementById("add-menu");
+      menuButton.addEventListener("click", () => {
+        const form = document.getElementById("MenuForm");
+        form.style.display = "block";
+      });
+
+      const closeButton = document.getElementById("closeForm");
+      closeButton.addEventListener("click", () => {
+        const form = document.getElementById("MenuForm");
+        form.style.display = "none";
+      });
+
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
+      import {
+        getDatabase,
+        ref,
+        push,
+        serverTimestamp,
+        onValue,
+        remove,
+      } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-database.js";
+      import { getAuth } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js";
+
+      const firebaseConfig = {
+        apiKey: "AIzaSyC4-OBG4PsazEyMNIdqjaZ0clGP-qf-b80",
+        authDomain: "messfood-a54ef.firebaseapp.com",
+        projectId: "messfood-a54ef",
+        storageBucket: "messfood-a54ef.appspot.com",
+        messagingSenderId: "99814659629",
+        appId: "1:99814659629:web:f2bf6e87dfecd025cb4aa4",
+      };
+      const app = initializeApp(firebaseConfig);
+      const db = getDatabase();
+      const auth = getAuth();
+
+      const menuContainer = document.getElementById("menuContainer");
+      const menuRef = ref(db, "menu");
+
+      const currentUserEmail = localStorage.getItem('currentUserEmail');
+
+      if (currentUserEmail) {
+        onValue(menuRef, (snapshot) => {
+          menuContainer.innerHTML = "";
+          snapshot.forEach((childSnapshot) => {
+            const menuItem = childSnapshot.val();
+            if (menuItem.userEmail === currentUserEmail) {
+              const menuItemElement = document.createElement("div");
+              menuItemElement.classList.add("menuItem");
+              menuItemElement.innerHTML = `
+                <div class="left">
+                  <p class="itemName">${menuItem.itemName}</p>
+                  <p>Price: ${menuItem.price}</p>
+                  <p>Quantity: ${menuItem.quantity}</p>
+                  <p>Food Type: ${menuItem.foodType}</p>  
+                  <p>Address: ${menuItem.address}</p> <!-- Display address -->
+                </div>
+                <button class="deleteButton" data-item-id="${childSnapshot.key}">Delete</button>
+              `;
+              menuContainer.appendChild(menuItemElement);
+            }
+          });
+
+          const deleteButtons = document.querySelectorAll(".deleteButton");
+          deleteButtons.forEach((button) => {
+            button.addEventListener("click", () => {
+              const itemId = button.getAttribute("data-item-id");
+              deleteMenuItem(itemId);
+            });
+          });
+        });
+      } else {
+        console.error("No user is currently logged in.");
+      }
+
+      const form = document.getElementById("menuForm");
+      form.addEventListener("submit", (event) => {
+        event.preventDefault();
+
+        const itemName = document.getElementById("itemName").value;
+        const price = document.getElementById("price").value;
+        const quantity = document.getElementById("quantity").value;
+        const address = document.getElementById("address").value;
+        const foodType = document.querySelector(
+          'input[name="foodType"]:checked'
+        ).value;
+
+        const user = auth.currentUser;
+        const email = user.email;
+
+        const menuItem = {
+          itemName: itemName,
+          price: price,
+          quantity: quantity,
+          address: address,
+          foodType: foodType,
+          userEmail: email,
+          timestamp: serverTimestamp(),
+        };
+
+        push(ref(db, "menu"), menuItem)
+          .then(() => {
+            alert("Menu item added successfully!");
+            form.reset();
+            const formDiv = document.getElementById("MenuForm");
+            formDiv.style.display = "none";
+          })
+          .catch((error) => {
+            console.error("Error adding menu item: ", error);
+          });
+      });
+
+      function deleteMenuItem(itemId) {
+        if (confirm("Are you sure you want to delete this item?")) {
+          remove(ref(db, `menu/${itemId}`))
+            .then(() => {
+              alert("Menu item deleted successfully!");
+            })
+            .catch((error) => {
+              console.error("Error deleting menu item: ", error);
+            });
+        }
+      }
+    </script>
+  </body>
+</html>

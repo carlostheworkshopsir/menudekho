@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="adminSignup.css">
+    <title>GET FOOD</title>
+    <link rel="icon" type="image" href="./assets/fast-food.png">
+</head>
+<body class="LoginPage">
+    <form class="loginForm" id="SignupForm">
+        <span class="loginPageTitle">Admin Signup</span>
+        <div class="loginInputs">
+            <input type="text" name="" id="email" placeholder="Enter Email">
+            <input type="password" name="" class="pass" id="pass1" placeholder="Enter Password">
+            <input type="password" name="" class="pass" id="pass2" placeholder="Reenter Password">
+            <input type="text" name="" id="mname" class="pass" placeholder="Name of Hotel/Resto">
+            <input type="text" name="" id="mid" class="pass" placeholder="Enter Mess/Hotel ID">
+            <input type="text" name="" id="add" class="pass" placeholder="Enter Mess/Hotel Address">
+        </div>
+        <div class="buttons">
+            <button class="login-btn" type="submit">SIGN UP</button>
+            <a href="./adminLogin.html" class="login-anch"><button class="signup-btn" type="button">LOGIN</button></a>
+        </div>
+    </form>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
+        import { getDatabase, set, ref } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-database.js";
+        import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyC4-OBG4PsazEyMNIdqjaZ0clGP-qf-b80",
+            authDomain: "messfood-a54ef.firebaseapp.com",
+            projectId: "messfood-a54ef",
+            storageBucket: "messfood-a54ef.appspot.com",
+            messagingSenderId: "99814659629",
+            appId: "1:99814659629:web:f2bf6e87dfecd025cb4aa4"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase();
+        const auth = getAuth(app);
+
+        const form = document.getElementById("SignupForm");
+        form.addEventListener('submit', createUser);
+
+        async function createUser(evt){
+            evt.preventDefault();
+            const email = document.getElementById("email").value;
+            const pass1 = document.getElementById("pass1").value;
+            const pass2 = document.getElementById("pass2").value;
+            const mname = document.getElementById("mname").value;
+            const mid = document.getElementById("mid").value;
+            const add = document.getElementById("add").value;
+
+            if (pass1 !== pass2) {
+                alert("Passwords do not match!");
+                return;
+            }
+
+            try {
+                const userCredential = await createUserWithEmailAndPassword(auth, email, pass1);
+                const user = userCredential.user;
+
+                await saveData(email, mname, mid, add);
+
+                alert("User created: " + user.email);
+                window.location.href = "./adminLogin.html";
+                console.log(userCredential);
+            } catch (error) {
+                alert("Error: " + error.message);
+            }
+        }
+
+        async function saveData(email, mname, mid, add){
+            try {
+                await set(ref(db, `users/${email.replace(".", "_")}`), {
+                    email: email,
+                    mname: mname,
+                    mid: mid,
+                    address: add,
+                });
+                console.log("User data saved successfully");
+            } catch (error) {
+                console.error("Error saving user data:", error);
+            }
+        }
+    </script>
+</body>
+</html>

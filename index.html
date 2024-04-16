@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GET FOOD</title>
+    <link rel="icon" type="image" href="./assets/fast-food.png">
+    <link rel="stylesheet" href="index.css">
+</head>
+<body>
+    <nav class="navbar">
+        <img src="./assets/get-food-high-resolution-logo-transparent.png" alt="" class="icon-img">
+        <a href="./adminLogin.html"><button class="admin-btn">Admin</button></a>
+    </nav>
+
+    <div id="restaurantContainer" class="restaurant-container"></div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
+        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyC4-OBG4PsazEyMNIdqjaZ0clGP-qf-b80",
+            authDomain: "messfood-a54ef.firebaseapp.com",
+            projectId: "messfood-a54ef",
+            storageBucket: "messfood-a54ef.appspot.com",
+            messagingSenderId: "99814659629",
+            appId: "1:99814659629:web:f2bf6e87dfecd025cb4aa4",
+        };
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase();
+
+        const restaurantContainer = document.getElementById("restaurantContainer");
+
+        onValue(ref(db, "users"), (snapshot) => {
+            restaurantContainer.innerHTML = "";
+
+            snapshot.forEach((childSnapshot, index) => {
+                const user = childSnapshot.val();
+                console.log(user);
+                const restaurantCard = document.createElement("div");
+                restaurantCard.classList.add("restaurant-card");
+                restaurantCard.style.backgroundColor = index % 2 === 0 ? "#f0f0f0" : "#e0e0e0";
+                restaurantCard.innerHTML = `
+                    <p class="name">${user.mname}</p>
+                    <p class="address">${user.address}</p>
+                    <button class="toggle-menu-btn">Show Menu</button>
+                    <div class="menu"></div>
+                `;
+                restaurantCard.addEventListener("click", () => {
+                    restaurantCard.classList.toggle("expanded");
+                });
+                restaurantContainer.appendChild(restaurantCard);
+
+                // Fetch and display menu items for the restaurant
+                const menuRef = ref(db, "menu");
+                onValue(menuRef, (snapshot) => {
+                    const menuItems = [];
+                    snapshot.forEach((childSnapshot) => {
+                        const menuItem = childSnapshot.val();
+                        if (menuItem.userEmail === user.email) {
+                            menuItems.push(menuItem);
+                        }
+                    });
+
+                    const menuDiv = restaurantCard.querySelector(".menu");
+                    menuDiv.innerHTML = ""; // Clear previous menu items
+                    menuItems.forEach((menuItem) => {
+                        const menuItemElement = document.createElement("div");
+                        menuItemElement.classList.add("menu-item");
+                        menuItemElement.innerHTML = `
+                            <p class="item-name">${menuItem.itemName}</p>
+                            <p>Price: ${menuItem.price}</p>
+                            <p>Quantity: ${menuItem.quantity}</p>
+                            <p>Food Type: ${menuItem.foodType}</p>
+                        `;
+                        menuDiv.appendChild(menuItemElement);
+                    });
+                });
+            });
+        });
+    </script>
+</body>
+</html>

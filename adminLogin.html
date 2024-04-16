@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="adminLogin.css">
+    <title>GET FOOD</title>
+    <link rel="icon" type="image" href="./assets/fast-food.png">
+</head>
+<body class="LoginPage">
+    <form class="loginForm" id="loginForm">
+        <span class="loginPageTitle">Admin Login</span>
+        <div class="loginInputs">
+            <input type="text" name="" id="email" placeholder="Enter Email">
+            <input type="password" name="" id="pass" placeholder="Enter Password">
+            <span style="font-weight: 300; margin-top: -20px; color: white;">Forgot password? <span style="font-weight: 600; color: blue; cursor: pointer;">Click here</span></span>
+        </div>
+        <div class="buttons">
+            <button class="login-btn">LOGIN</button>
+            <a href="./adminSignup.html" class="signup-anch"><button class="signup-btn" type="button">SIGN UP</button></a>
+        </div>
+    </form>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyC4-OBG4PsazEyMNIdqjaZ0clGP-qf-b80",
+            authDomain: "messfood-a54ef.firebaseapp.com",
+            projectId: "messfood-a54ef",
+            storageBucket: "messfood-a54ef.appspot.com",
+            messagingSenderId: "99814659629",
+            appId: "1:99814659629:web:f2bf6e87dfecd025cb4aa4"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+
+        const form = document.getElementById("loginForm");
+        form.addEventListener('submit', loginUser);
+
+        async function loginUser(e){
+            e.preventDefault();
+
+            const email = document.getElementById("email").value;
+            const pass = document.getElementById("pass").value;
+
+            try{
+                const result = await signInWithEmailAndPassword(auth, email, pass);
+                const user = result.user;
+                localStorage.setItem('currentUserEmail', email);
+                window.location.href = "./adminDashBoard.html";
+            }
+            catch(e){
+                alert(e);
+            }
+        }
+    </script>
+</body>
+</html>
